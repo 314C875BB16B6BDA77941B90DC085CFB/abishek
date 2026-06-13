@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import CategoryBar from './components/CategoryBar';
 import ProductCard from './components/ProductCard';
 import CartDrawer from './components/CartDrawer';
+import AuthModal from './components/AuthModal';
 import { generateProducts } from './data/mockData';
-import { Product, CartItem } from './types';
-import { motion } from 'framer-motion';
+import { Product, CartItem, User } from './types';
 
 const App: React.FC = () => {
   const [products] = useState<Product[]>(() => generateProducts(48));
@@ -13,6 +13,10 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Filter logic
   const filteredProducts = useMemo(() => {
@@ -48,6 +52,16 @@ const App: React.FC = () => {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
+  // Auth Handlers
+  const handleLoginSuccess = (name: string, email: string) => {
+    setUser({ name, email });
+    setIsAuthModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
       <Navbar 
@@ -55,6 +69,9 @@ const App: React.FC = () => {
         onCartClick={() => setIsCartOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        user={user}
+        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
       
       <CategoryBar 
@@ -63,7 +80,6 @@ const App: React.FC = () => {
       />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
-        {/* Banner Area (Optional Enhancement) */}
         {activeCategory === 'All' && !searchQuery && (
           <div className="mb-6 rounded-sm overflow-hidden shadow-sm h-48 md:h-64 bg-blue-600 relative">
             <img 
@@ -78,7 +94,6 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Results Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-800">
             {searchQuery ? `Search results for "${searchQuery}"` : `${activeCategory} Collection`}
@@ -86,7 +101,6 @@ const App: React.FC = () => {
           </h2>
         </div>
 
-        {/* Product Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredProducts.map(product => (
@@ -159,6 +173,12 @@ const App: React.FC = () => {
         items={cartItems}
         onUpdateQuantity={updateQuantity}
         onRemove={removeFromCart}
+      />
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
     </div>
   );
